@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: black;
+        }
+
+        .container {
+            width: 960px;
+            margin: 0 auto;
+        }
+
+        .container>ul {
+            width: 960px;
+            position: relative;
+        }
+
+        .container>ul>li {
+            width: 278px;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            position: absolute;
+            opacity: 0;
+            transition: all 1s;
+        }
+
+        .container>ul>li img {
+            width: 278px;
+        }
+
+        .container>ul>li h3 {
+            font-size: 16px;
+            margin: 0;
+            padding: 10px 0 5px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .container>ul>li p {
+            font-size: 12px;
+            margin: 0;
+            padding-top: 10px;
+            color: gray;
+            line-height: 20px;
+        }
+
+        .getWidth {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <ul class="news">
+            <!--<li>
+                <a href="http://slide.tech.sina.com.cn/d/slide_5_453_102474.html/d/2">
+                    <div class="pic">
+                        <img src="http://n.sinaimg.cn/tech/transform/20171025/9Ndh-fymzzpw1591833.jpg" alt="">
+                    </div>
+                    <h3>NASA筹备小行星撞地防御措施</h3>
+                    <p>NASA正在筹备一项规模庞大的太空计划，但愿能使地球免遭被小行星摧毁的厄运。</p>
+                </a>
+            </li>-->
+            <li class="getWidth"></li>
+        </ul>
+        <div class="more"></div>
+    </div>
+
+    <script src="https://cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
+    <script>
+        /*思路：先获取数据；
+        然后将获取数据用函数拼接成dom元素，然后用瀑布布局渲染到页面上；
+        当窗口滚动时，判断标记元素是否出现在页面上，若出现则继续调用函数加载新闻，实现懒加载
+        */
+        var page = 1;
+        var num = 3;
+        var $nodeNum = parseInt($(".news").width() / $(".container>ul>li").width());
+        //console.log($nodeNum)
+        var nodeArr = [];
+        var isLoad = true;
+        var isShow = false;//设置模拟状态锁，防止在数据为到来前因多次滚动，多次调用函数
+        for (var i = 0; i < $nodeNum; i++) {
+            nodeArr[i] = 0;
+        }
+        //console.log($nodeNum)   
+        showNews();
+
+        $(window).on("scroll", function () {
+            console.log(isVisible($(".more")))
+            if (isVisible($(".more")) && !isShow && isLoad) {
+                showNews();
+            }
+        })//窗口滚动调用函数
+
+        function showNews() {
+            getNews(function (e) {
+                // console.log(e)
+                $.each(e, function (idx, news) {
+                    var $node3 = func(news)
+                    $node3.find("img").load(function () {
+                        $(".news").append($node3);
+                        //console.log($node3,"load")
+                        waterFall($node3);
+                    })
+                })
+
+            })
+        }//收到数据时调用的函数，将所收到的数据拼接，渲染到页面
+
+
+        function getNews(callback) {
+            isLoad = false;
+            $.ajax({
+                url: "http://platform.sina.com.cn/slide/album_tech",//?jsoncallback=func&app_key=1271687855&num=3&page=4
+                dataType: "jsonp",
+                jsonp: "jsoncallback",
+                data: {
+                    app_key: "1271687855",
+                    num: num,
+                    page: page
+                }
+            }).done(function (ret) {
+                isLoad = true;
+                if (ret && ret.status.code === "0") {
+                    callback(ret.data);
+                    page++;
+                    if (isVisible($(".more")) && !isShow && isLoad) {
+                        showNews();
+                    }
+                } else {
+                    console.log("get error!");
+                }
+            }).fail(function () {
+                alert("系统异常！");
+            })
+        }//接收数据函数
+
+        function func(news) {
+            var html = "";
+            html += "<li>";
+            html += "<a href='" + news.url + "'>";
+            html += "<div class='pic'>";
+            html += "<img src='" + news.img_url + "'alt=''>"
+            html += "</div>";
+            html += "<h3>" + news.name + "</h3>";
+            html += "<p>" + news.short_intro + "</p>";
+            html += "</a>";
+            html += "</li>";
+            return $(html);
+        }//把收到数据用dom元素拼接后返回
+
+
+
+        function waterFall($node) {
+            var minHeight = Math.min.apply(null, nodeArr);
+            var minIdx = nodeArr.indexOf(minHeight);
+            //console.log(node.height())
+            $node.css({
+                top: nodeArr[minIdx],
+                left: $node.outerWidth(true) * minIdx,
+                opacity: 1
+            })
+            nodeArr[minIdx] += $node.outerHeight(true);
+            $(".news").height(Math.max.apply(null, nodeArr));
+        }//将所渲染的元素用瀑布流布局实现。
+
+        function isVisible($node) {
+            var $windowHeight = $(window).height()
+            var $scrollHeight = $(window).scrollTop();
+            var $nodeHeight = $node.offset().top;
+            if ($nodeHeight < $windowHeight + $scrollHeight && $nodeHeight > $scrollHeight) {
+                return true;
+            }
+            return false;
+        }//判断标记元素是否出现在浏览器视野
+
+    </script>
+</body>
+
+</html>

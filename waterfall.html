@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .container{
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .container>ul {
+            width: 660px;
+            position: relative;
+        }
+
+        .container>ul li {
+            width: 200px;
+            margin: 10px;
+            position: absolute;
+            transition: all 1s;
+        }
+
+        .h1 {
+            height: 200px;
+            background: gray;
+        }
+
+        .h2 {
+            height: 300px;
+            background: blue;
+        }
+
+        .h3 {
+            height: 400px;
+            background: palegoldenrod;
+        }
+
+        .h4 {
+            height: 280px;
+            background: peachpuff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <ul>
+            <li class="h1">1</li>
+            <li class="h2">2</li>
+            <li class="h1">3</li>
+            <li class="h3">4</li>
+            <li class="h1">5</li>
+            <li class="h4">6</li>
+            <li class="h2">7</li>
+            <li class="h4">8</li>
+            <li class="h3">9</li>
+            <li class="h1">10</li>
+            <li class="h2">11</li>
+            <li class="h4">12</li>
+            <li class="h1">13</li>
+            <li class="h3">14</li>
+            <li class="h4">15</li>
+            <li class="h2">16</li>
+            <li class="h3">17</li>
+            <li class="h2">18</li>
+            <li class="h4">19</li>
+            <li class="h3">20</li>
+        </ul>
+    </div>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+
+        var waterFall = (function () {
+            function init() {
+                waterFall()
+                $(window).on("resize", function () {
+                    waterFall()
+                })
+                function waterFall() {
+                    var $node = $(".container li"); //获取所有节点
+                    var $nodeWidth = $node.outerWidth(true); //获取每个节点的宽
+                    var $nodeNum = parseInt($(".container").width() / $nodeWidth);//获取一行节点个数
+                    var nodeArr = [];
+                    for (var i = 0; i < $nodeNum; i++) {
+                        nodeArr[i] = 0;
+                    } //重置数组里的值为0
+                    $node.each(function () {
+                        var minHeight = Math.min.apply(null, nodeArr);//获取数组里最小的值，为高度
+                        var minIdx = nodeArr.indexOf(minHeight);//获取最小值序列号
+                        $(this).css({
+                            top: nodeArr[minIdx],//设置top为最小值序列号的值
+                            left: $(this).outerWidth(true) * minIdx //设置left为选中节点宽度*最小值序列号
+                        });
+                        nodeArr[minIdx] += $(this).outerHeight(true); //更新最小值的数值
+                        //console.log(nodeArr[minIdx])
+                    })
+                }
+
+            }
+            return {
+                init: init
+            }
+        })();//封装函数
+        waterFall.init();
+
+    </script>
+</body>
+
+</html>
